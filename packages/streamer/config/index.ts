@@ -6,6 +6,7 @@ const logger = new Logger("Config");
 
 interface IConfigNginx {
   configFile: string;
+  rtmpUrl: string;
 }
 
 interface IConfigHttp {
@@ -34,6 +35,7 @@ export class StreamerConfig implements IServiceConfig {
       },
       nginx: {
         configFile: mustDefineEnv("NGINX_CONFIG_FILE"),
+        rtmpUrl: envWithDefault("RTMP_URL", "rtmp://localhost:8084/rtmp_push/"),
       },
     });
   }

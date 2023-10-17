@@ -1,13 +1,16 @@
 import { StreamerConfig } from "../config";
 import { BaseService, ServiceName } from "./base";
-import fs from "node:fs";
 import shell from "shelljs";
 import { ChildProcess, spawn } from "node:child_process";
 import split2 from "split2";
 import { Logger } from "@grimes/common/logger";
+import { Broadcaster } from "../model";
+
+
 
 export class VideoStreamService extends BaseService {
   private nginxProcess: ChildProcess;
+  private broadcaster: Map<string, Broadcaster> = new Map();
 
   constructor(config: StreamerConfig) {
     super(config, "VideoStreamService");
@@ -41,6 +44,15 @@ export class VideoStreamService extends BaseService {
     this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
       nginxLogger.info(data);
     });
+  }
+
+  public startSessionForClient(clientName: string): Broadcaster {
+    if (this.broadcaster.has(clientName)) {
+      throw new Error("Broadcaster already exists");
+    }
+    const broadcaster = new Broadcaster(clientName, this.config.nginx.rtmpUrl);
+    this.broadcaster.set(clientName, broadcaster);
+    return broadcaster;
   }
 
 }

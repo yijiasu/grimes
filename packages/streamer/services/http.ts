@@ -6,9 +6,11 @@ import Fastify, {
   FastifyPluginCallback,
 } from "fastify";
 import cors from "@fastify/cors";
+import { VideoStreamService } from "./stream";
 
 export class HTTPService extends BaseService {
   private fastify: FastifyInstance;
+  private vsService: VideoStreamService;
 
   constructor(config: StreamerConfig) {
     super(config, "HTTPService");
@@ -20,9 +22,10 @@ export class HTTPService extends BaseService {
   }
 
   public dependencies(): Array<ServiceName> {
-    return [];
+    return ["VideoStreamService"];
   }
   protected async onServiceStart(): Promise<void> {
+    this.vsService = this.serviceManager.getService("VideoStreamService");
     await this.startFastify();
   }
   protected async onServiceStop(): Promise<void> {}
@@ -39,22 +42,32 @@ export class HTTPService extends BaseService {
 
     // this function is called by streamer client to get the metadata
     this.fastify.get("/metadata", async (request, reply) => {
-      return "This is my metadata. It should give information about the fee";
+      return { "metadata": "This is my metadata. It should give information about the fee" };
     });
 
     // this function is called by streamer client to start the streaming request
     this.fastify.post("/start", async (request, reply) => {
-      
+      const { clientName } = request.body as any;
+      const broadcaster = this.vsService.startSessionForClient(clientName);
+      return {
+        method: "start",
+        status: "ok",
+        pushId: broadcaster.pushId,
+        rmtpPushUrl: broadcaster.getRmtpUrl(),
+      };
+      // return { "method": "start", "status": "ok", clientName };
     });
 
     // this function is called by streamer client to streaming invoice
     this.fastify.post("/send_invoice",async (request, reply) => {
-      
+      return { "status": "ok" };
+
     });
 
     // this function is called by streamer client to check if the invoice is paid
     this.fastify.get("/check_invoice", async (request, reply) => {
-      
+      return { "status": "ok" };
+
     });
 
 
