@@ -1,0 +1,14 @@
+import { ServiceConfig } from "../config";
+import { BaseService, ServiceName } from "./base";
+
+export class HTTPService extends BaseService {
+  constructor(config: ServiceConfig) {
+    super(config, "HTTPService");
+  }
+
+  public dependencies(): Array<ServiceName> {
+    return [];
+  }
+  protected async onServiceStart(): Promise<void> {}
+  protected async onServiceStop(): Promise<void> {}
+}
