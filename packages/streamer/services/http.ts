@@ -53,7 +53,7 @@ export class HTTPService extends BaseService {
         method: "start",
         status: "ok",
         pushId: broadcaster.pushId,
-        rmtpPushUrl: broadcaster.getRmtpUrl(),
+        rtmpPushUrl: broadcaster.getrtmpUrl(),
       };
       // return { "method": "start", "status": "ok", clientName };
     });

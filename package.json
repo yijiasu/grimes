@@ -10,8 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@getalby/lightning-tools": "^4.0.2",
+    "@zbd/node": "^0.6.3",
     "dotenv": "^16.3.1",
+    "mocha": "^10.2.0",
     "reflect-metadata": "^0.1.13",
+    "shelljs": "^0.8.5",
+    "split2": "^4.2.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
     "yargs": "^17.7.2"

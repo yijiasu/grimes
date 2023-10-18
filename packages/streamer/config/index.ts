@@ -9,16 +9,22 @@ interface IConfigNginx {
   rtmpUrl: string;
 }
 
+interface IConfigLN {
+  zbdApiKey: string;
+}
+
 interface IConfigHttp {
   port: number;
 }
 export interface IServiceConfig {
   http: IConfigHttp;
   nginx: IConfigNginx;
+  ln: IConfigLN;
 }
 export class StreamerConfig implements IServiceConfig {
   public readonly http: IConfigHttp;
   public readonly nginx: IConfigNginx;
+  public readonly ln: IConfigLN;
 
   constructor(config: IServiceConfig) {
     Object.assign(this, config);
@@ -35,8 +41,11 @@ export class StreamerConfig implements IServiceConfig {
       },
       nginx: {
         configFile: mustDefineEnv("NGINX_CONFIG_FILE"),
-        rtmpUrl: envWithDefault("RTMP_URL", "rtmp://localhost:8084/rtmp_push/"),
+        rtmpUrl: envWithDefault("RTMP_URL", "rtmp://localhost/rtmp_push/"),
       },
+      ln: {
+        zbdApiKey: mustDefineEnv("ZBD_API_KEY"),
+      }
     });
   }
 

@@ -4,11 +4,15 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
+    "dev": "ts-node broadcaster.ts",
     "test": "mocha test/**/*.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@grimes/common": "workspace:^"
+  },
   "devDependencies": {
     "chai": "^4.3.10",
     "mocha": "^10.2.0"
