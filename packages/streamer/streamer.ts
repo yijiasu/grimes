@@ -6,6 +6,7 @@ import { ServiceManager } from "./services/service-manager";
 import { StreamerConfig } from "./config";
 import { HTTPService } from "./services";
 import { VideoStreamService } from "./services/stream";
+import { PaymentService } from './services/payment';
 
 async function main(argv: Record<string, any>) {
   const { config } = argv;
@@ -15,6 +16,7 @@ async function main(argv: Record<string, any>) {
   console.log(serviceConfig)
   serviceManager.registerService(new HTTPService(serviceConfig));
   serviceManager.registerService(new VideoStreamService(serviceConfig));
+  serviceManager.registerService(new PaymentService(serviceConfig));
 
   await serviceManager.startAllServices();
 }

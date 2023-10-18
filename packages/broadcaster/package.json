@@ -11,7 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@grimes/common": "workspace:^"
+    "@grimes/common": "workspace:^",
+    "set-interval-async": "^3.0.3"
   },
   "devDependencies": {
     "chai": "^4.3.10",

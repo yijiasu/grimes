@@ -5,6 +5,7 @@ import { Logger } from "@grimes/common/logger";
 import { sleep } from "@grimes/common";
 import { NetClient } from "./net-client";
 import { VideoStreamer } from "./video-streamer";
+import { PaymentCollector } from "./payment-collector";
 
 const logger = new Logger("Broadcaster");
 
@@ -17,6 +18,12 @@ async function main(argv: Record<string, any>) {
   if (!file) {
     logger.panic("No file provided");
   }
+  
+  if (!process.env.ZBD_API_KEY) {
+    logger.panic("No ZBD_API_KEY provided");
+  }
+
+  const zbdApiKey = process.env.ZBD_API_KEY;
 
   const netClient = new NetClient(url);
   await netClient.connectivityCheck();
@@ -31,11 +38,19 @@ async function main(argv: Record<string, any>) {
   vs.attachRtmp(rtmpPushUrl);
   vs.start();
 
+  const pc = new PaymentCollector(zbdApiKey);
+
   while (true) {
+    await sleep(5000);
     logger.info("Runloop started");
-    await sleep(1000);
+    pc.printStatus();
+
     // 1. send new invoice
     // 2. check our previous invoice is paid, otherwise we stop our video streaming
+
+    const invoice = await pc.createInvoice();
+    // console.log(invoice);
+    await netClient.sendInvoice(invoice.request);
   }
 }
 

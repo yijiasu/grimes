@@ -17,6 +17,10 @@ export class NetClient {
     return this.httpPostRequest("start", { clientName });
   }
 
+  public async sendInvoice(invoiceRequest: string) {
+    return this.httpPostRequest("send_invoice", { invoiceRequest });
+  }
+
   private async httpGetRequest(subpath: string) {
     return fetch(`${this.baseUrl}/${subpath}`, { method: "GET" }).then(
       this.responseHandler

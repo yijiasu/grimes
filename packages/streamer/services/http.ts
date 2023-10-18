@@ -7,10 +7,12 @@ import Fastify, {
 } from "fastify";
 import cors from "@fastify/cors";
 import { VideoStreamService } from "./stream";
+import { PaymentService } from "./payment";
 
 export class HTTPService extends BaseService {
   private fastify: FastifyInstance;
   private vsService: VideoStreamService;
+  private paymentService: PaymentService;
 
   constructor(config: StreamerConfig) {
     super(config, "HTTPService");
@@ -22,10 +24,11 @@ export class HTTPService extends BaseService {
   }
 
   public dependencies(): Array<ServiceName> {
-    return ["VideoStreamService"];
+    return ["VideoStreamService", "PaymentService"];
   }
   protected async onServiceStart(): Promise<void> {
     this.vsService = this.serviceManager.getService("VideoStreamService");
+    this.paymentService = this.serviceManager.getService("PaymentService");
     await this.startFastify();
   }
   protected async onServiceStop(): Promise<void> {}
@@ -58,16 +61,30 @@ export class HTTPService extends BaseService {
       // return { "method": "start", "status": "ok", clientName };
     });
 
+    // let ctr = 0;
     // this function is called by streamer client to streaming invoice
     this.fastify.post("/send_invoice",async (request, reply) => {
-      return { "status": "ok" };
+      const { invoiceRequest } = request.body as any;
+      this.logger.info("Recv invoice from broadcaster");
 
+      // we pay immediately when receiving the invoice
+      // for testing purpose we can just discard some of the invoice to make the broadcaster unhappy
+      // it should suspend the streaming if too many invoices are not paid
+
+      // if (ctr < 3) {
+        this.paymentService.payInvoice(invoiceRequest).catch(err => {
+          this.logger.error("Error paying invoice", err);
+        });  
+      // }
+
+      // ctr++;
+
+      return { "status": "ok" };
     });
 
     // this function is called by streamer client to check if the invoice is paid
     this.fastify.get("/check_invoice", async (request, reply) => {
       return { "status": "ok" };
-
     });
 
 

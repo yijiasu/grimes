@@ -51,6 +51,9 @@ importers:
       '@grimes/common':
         specifier: workspace:^
         version: link:../common
+      set-interval-async:
+        specifier: ^3.0.3
+        version: 3.0.3
     devDependencies:
       chai:
         specifier: ^4.3.10
@@ -1007,6 +1010,11 @@ packages:
 
   /set-cookie-parser@2.6.0:
     resolution: {integrity: sha512-RVnVQxTXuerk653XfuliOxBP81Sf0+qfQE73LIYKcyMYHG94AuH0kgrQpRDuTZnSmjpysHmzxJXKNfa6PjFhyQ==}
+    dev: false
+
+  /set-interval-async@3.0.3:
+    resolution: {integrity: sha512-o4DyBv6mko+A9cH3QKek4SAAT5UyJRkfdTi6JHii6ZCKUYFun8SwgBmQrOXd158JOwBQzA+BnO8BvT64xuCaSw==}
+    engines: {node: '>= 14.0.0'}
     dev: false
 
   /shelljs@0.8.5:
