@@ -72,6 +72,12 @@ importers:
 
   packages/player:
     dependencies:
+      '@grimes/common':
+        specifier: workspace:^
+        version: link:../common
+      '@webbtc/webln-types':
+        specifier: ^2.0.1
+        version: 2.0.1
       cash-dom:
         specifier: ^8.1.5
         version: 8.1.5
@@ -428,6 +434,10 @@ packages:
     dependencies:
       '@types/glob': 7.2.0
       '@types/node': 20.8.6
+    dev: false
+
+  /@webbtc/webln-types@2.0.1:
+    resolution: {integrity: sha512-magyMAiN8u7PsECuj7PfFsStMne30E3QiyNfurL4mTTHse3lmG2Pkh3hDv3jh+D3PTWMfCgv1WFUKVmEgKbBkA==}
     dev: false
 
   /@zbd/node@0.6.3:

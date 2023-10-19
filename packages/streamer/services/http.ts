@@ -10,11 +10,13 @@ import replyFrom from "@fastify/reply-from";
 import { VideoStreamService } from "./stream";
 import { PaymentService } from "./payment";
 import { bufferXor } from "@grimes/common";
+import { ViewerSessionService } from "./viewer_session";
 
 export class HTTPService extends BaseService {
   private fastify: FastifyInstance;
   private vsService: VideoStreamService;
   private paymentService: PaymentService;
+  private viewerSessionService: ViewerSessionService;
 
   constructor(config: StreamerConfig) {
     super(config, "HTTPService");
@@ -31,6 +33,8 @@ export class HTTPService extends BaseService {
   protected async onServiceStart(): Promise<void> {
     this.vsService = this.serviceManager.getService("VideoStreamService");
     this.paymentService = this.serviceManager.getService("PaymentService");
+    this.viewerSessionService = this.serviceManager.getService("ViewerSessionService");
+
     await this.startFastify();
   }
   protected async onServiceStop(): Promise<void> {}
@@ -101,16 +105,16 @@ export class HTTPService extends BaseService {
 
     // this function is called by the viewer to fetch the hls key for video segment decryption
     this.fastify.post("/viewer_start", async (request, reply) => {
-      const { viewId } = request.body as any;
+      const { viewerName } = request.body as any;
 
-      return { "status": "ok", playlist: `http://${this.config.domain}:${this.config.http.port}/viewer_playlist?viewId=` + viewId };
+      return { "status": "ok", playlist: `http://${this.config.domain}:${this.config.http.port}/viewer_playlist?viewerName=` + viewerName };
       
     });
 
     this.fastify.get("/viewer_playlist", async (request, reply) => {
-      const { viewId } = request.query as any;
-      if (!viewId) {
-        throw new Error("No viewId provided");
+      const { viewerName } = request.query as any;
+      if (!viewerName) {
+        throw new Error("No viewerName provided");
       }
 
       const nginxHost = `${this.config.domain}:${this.config.nginx.port}`;
@@ -118,16 +122,16 @@ export class HTTPService extends BaseService {
 
       let upstreamPlaylist = await fetch(`http://${nginxHost}/hls/output.m3u8`).then(res => res.text());
       // #EXT-X-KEY:METHOD=AES-128,URI="{{HLS_KEY_URL,74e5fecc5cd44f017c38f5ee5b87ba27}}",IV=0x390a23ed3ce950443b8cfbb1e56185ea
-      upstreamPlaylist = upstreamPlaylist.replace(/{{HLS_KEY_URL,(.*)}}/g, `http://${httpHost}/viewer_hlskey?envKey=$1&viewId=${viewId}`);
+      upstreamPlaylist = upstreamPlaylist.replace(/{{HLS_KEY_URL,(.*)}}/g, `http://${httpHost}/viewer_hlskey?envKey=$1&viewerName=${viewerName}`);
       upstreamPlaylist = upstreamPlaylist.replace(/(output\d+\.ts)/g, `http://${httpHost}/hls_ts/$1`)
 
       return upstreamPlaylist;
     });
 
     this.fastify.get("/viewer_hlskey", async (request, reply) => {
-      const { viewId, envKey } = request.query as any;
-      if (!viewId) {
-        throw new Error("No viewId provided");
+      const { viewerName, envKey } = request.query as any;
+      if (!viewerName) {
+        throw new Error("No viewerName provided");
       }
       if (!envKey) {
         throw new Error("No envKey provided");
@@ -135,6 +139,9 @@ export class HTTPService extends BaseService {
       if (envKey.length !== 32) {
         throw new Error("envKey length should be 32");
       }
+
+      // TODO: We should decide whether to give or NOT give the segKey based on the payment history of that viewer
+      // e.g. if the viewer has too many unpaid invoices, we should not give the segKey and cut the stream
 
       // TODO: hardcoded masterKey
       const masterKey = "ecd0d06eaf884d8226c33928e87efa33"
@@ -147,6 +154,27 @@ export class HTTPService extends BaseService {
       return reply.from(`http://${this.config.domain}:${this.config.nginx.port}/hls/${ts}`);
     });
 
+
+    // it's now free to start a session
+    this.fastify.post("/start_viewer_session", async (request, reply) => {
+      const { viewerName } = request.body as any;
+      const session = this.viewerSessionService.startSession(viewerName);
+      return { playlist: session.getPlaylistUrl() };
+    });
+
+    this.fastify.get("/get_pending_invoice", async (request, reply) => {
+      const { viewerName } = request.query as any;
+      const session = this.viewerSessionService.getSession(viewerName);
+      return { status: "ok", pendingInvoices: session.unpaidInvoices };
+    });
+
+    this.fastify.get("/get_paid_invoice", async (request, reply) => {
+      const { viewerName } = request.query as any;
+      const session = this.viewerSessionService.getSession(viewerName);
+      return { status: "ok", paidInvoices: session.paidInvoices };
+    });
+
+    
 
   }
 }

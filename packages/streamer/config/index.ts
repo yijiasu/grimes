@@ -17,12 +17,19 @@ interface IConfigLN {
 interface IConfigHttp {
   port: number;
 }
+
+interface IConfigViewer {
+  invoiceInterval: number;
+  staleViewerTimeout: number;
+}
+
 export interface IServiceConfig {
   rootPath: string;
   domain: string;
   http: IConfigHttp;
   nginx: IConfigNginx;
   ln: IConfigLN;
+  viewer: IConfigViewer;
 }
 export class StreamerConfig implements IServiceConfig {
   
@@ -31,6 +38,7 @@ export class StreamerConfig implements IServiceConfig {
   public readonly http: IConfigHttp;
   public readonly nginx: IConfigNginx;
   public readonly ln: IConfigLN;
+  public readonly viewer: IConfigViewer;
 
   constructor(config: IServiceConfig) {
     Object.assign(this, config);
@@ -54,6 +62,11 @@ export class StreamerConfig implements IServiceConfig {
       },
       ln: {
         zbdApiKey: mustDefineEnv("ZBD_API_KEY"),
+      },
+      viewer: {
+        // This is how frequently the streamer will send invoices to the viewer
+        invoiceInterval: Number(envWithDefault("INVOICE_INTERVAL", 5000)),
+        staleViewerTimeout: Number(envWithDefault("STALE_VIEWER_TIMEOUT", 120000)),
       }
     });
   }

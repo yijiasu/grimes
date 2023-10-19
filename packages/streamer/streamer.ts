@@ -4,7 +4,7 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { ServiceManager } from "./services/service-manager";
 import { StreamerConfig } from "./config";
-import { HTTPService } from "./services";
+import { HTTPService, ViewerSessionService } from "./services";
 import { VideoStreamService } from "./services/stream";
 import { PaymentService } from './services/payment';
 
@@ -17,6 +17,7 @@ async function main(argv: Record<string, any>) {
   serviceManager.registerService(new HTTPService(serviceConfig));
   serviceManager.registerService(new VideoStreamService(serviceConfig));
   serviceManager.registerService(new PaymentService(serviceConfig));
+  serviceManager.registerService(new ViewerSessionService(serviceConfig));
 
   await serviceManager.startAllServices();
 }
