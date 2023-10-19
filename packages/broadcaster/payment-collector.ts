@@ -39,7 +39,7 @@ export class PaymentCollector {
   constructor(zbdApiKey: string) {
     this.zbd = new zbd(zbdApiKey);
     this.batchId = Math.random().toString(36).substring(2, 8);
-    this.runloopInterval = setIntervalAsync(this.runloop.bind(this), 1000);
+    this.runloopInterval = setIntervalAsync(this.runloop.bind(this), 10000);
   }
   public async createInvoice() {
     this.ctr++;

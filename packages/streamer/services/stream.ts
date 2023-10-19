@@ -5,8 +5,8 @@ import { ChildProcess, spawn } from "node:child_process";
 import split2 from "split2";
 import { Logger } from "@grimes/common/logger";
 import { Broadcaster } from "../model";
-
-
+import fs from "node:fs";
+import shelljs from "shelljs";
 
 export class VideoStreamService extends BaseService {
   private nginxProcess: ChildProcess;
@@ -35,8 +35,26 @@ export class VideoStreamService extends BaseService {
   }
 
   private async spawnNginx() {
-    const configFile = this.config.nginx.configFile;
-    this.nginxProcess = spawn("nginx", ["-c", configFile], { stdio: "pipe" });
+    // const configFile = this.config.nginx.configFile;
+    const configFileTemplate = this.config.rootPath + "/nginx/liveserver_template.conf";
+    let configFile = fs.readFileSync(configFileTemplate, "utf8").toString();
+
+    // TODO: replace the following two lines with the actual command
+    // const RTMP_PUSH_CMD = "/opt/homebrew/bin/ffmpeg -i rtmp://localhost/rtmp_push/$name -c:v libx264 -c:a aac -strict -2 -f hls -hls_key_info_file /Users/yijiasu/workspace/ibc/grimes/nginx/hls_key/enc.keyinfo -hls_list_size 0 -hls_time 2 /tmp/hls/output.m3u8 >/dev/stdout 2>/dev/stdout";
+    const nodeJsPath = shelljs.which("node").toString();
+    const codecScriptPath = this.config.rootPath + "/packages/streamer/codec.js";
+    const ffmpegPath = shelljs.which("ffmpeg").toString();
+
+    // TODO: hardcoded key
+    const RTMP_PUSH_CMD = `${nodeJsPath} ${codecScriptPath} --ffmpegPath ${ffmpegPath} --streamName $name --masterKey ecd0d06eaf884d8226c33928e87efa33 >/tmp/codec_out.log 2>/tmp/codec_err.log`;
+    const HLS_KEY_ALIAS = "/Users/yijiasu/workspace/ibc/grimes/nginx/hls_key";
+    configFile = configFile.replace("<!RTMP_PUSH_CMD!>", RTMP_PUSH_CMD);
+    configFile = configFile.replace("<!HLS_KEY_ALIAS!>", HLS_KEY_ALIAS);
+
+    const tmpConfigFile = `/tmp/liveserver.conf`;
+    fs.writeFileSync(tmpConfigFile, configFile);
+
+    this.nginxProcess = spawn("nginx", ["-c", tmpConfigFile], { stdio: "pipe" });
     const nginxLogger = new Logger("Nginx");
     this.nginxProcess.stderr.pipe(split2()).on("data", (data) => {
       nginxLogger.error(data);

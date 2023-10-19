@@ -41,7 +41,7 @@ async function main(argv: Record<string, any>) {
   const pc = new PaymentCollector(zbdApiKey);
 
   while (true) {
-    await sleep(5000);
+    await sleep(60000);
     logger.info("Runloop started");
     pc.printStatus();
 

@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^8.4.0",
+    "@fastify/reply-from": "^9.4.0",
     "@grimes/common": "workspace:^",
     "@types/shelljs": "^0.8.13",
     "fastify": "^4.24.2",

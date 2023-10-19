@@ -4,7 +4,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const playlistUrl = "http://localhost:8084/hls/output.m3u8";
+const playlistUrl = "http://localhost:8083/viewer_playlist?viewId=24";
 if (HLS.isSupported()) {
   // alert("HLS is supported");
   const hls = new HLS();

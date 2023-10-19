@@ -17,11 +17,14 @@ interface IConfigHttp {
   port: number;
 }
 export interface IServiceConfig {
+  rootPath: string;
   http: IConfigHttp;
   nginx: IConfigNginx;
   ln: IConfigLN;
 }
 export class StreamerConfig implements IServiceConfig {
+  
+  public readonly rootPath: string;
   public readonly http: IConfigHttp;
   public readonly nginx: IConfigNginx;
   public readonly ln: IConfigLN;
@@ -36,6 +39,7 @@ export class StreamerConfig implements IServiceConfig {
 
   static createFromEnv(): StreamerConfig {
     return new StreamerConfig({
+      rootPath: require("app-root-path").toString(),
       http: {
         port: envWithDefault("HTTP_PORT", 8083),
       },

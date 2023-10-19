@@ -24,3 +24,14 @@ export const booleanEnvWithDefault = (envName: string, defaultValue: boolean): b
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export const bufferXor = (a: Buffer, b: Buffer) => {
+  if (a.length !== b.length) {
+    throw new Error("Buffer lengths must match");
+  }
+  const result = Buffer.alloc(a.length);
+  for (let i = 0; i < a.length; i++) {
+    result[i] = a[i] ^ b[i];
+  }
+  return result;
+};
