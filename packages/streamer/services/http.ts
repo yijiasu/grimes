@@ -43,7 +43,7 @@ export class HTTPService extends BaseService {
 
   private setupRoutes() {
 
-    this.fastify.register(replyFrom, { base: "http://localhost:8084" });
+    this.fastify.register(replyFrom, { base: `http://${this.config.domain}:${this.config.nginx.port}` });
 
     this.fastify.get("/", async (request, reply) => {
       return "Lightning Streamer Backend is running";
@@ -103,7 +103,7 @@ export class HTTPService extends BaseService {
     this.fastify.post("/viewer_start", async (request, reply) => {
       const { viewId } = request.body as any;
 
-      return { "status": "ok", playlist: "http://localhost:8083/viewer_playlist?viewId=" + viewId };
+      return { "status": "ok", playlist: `http://${this.config.domain}:${this.config.http.port}/viewer_playlist?viewId=` + viewId };
       
     });
 
@@ -112,10 +112,14 @@ export class HTTPService extends BaseService {
       if (!viewId) {
         throw new Error("No viewId provided");
       }
-      let upstreamPlaylist = await fetch("http://localhost:8084/hls/output.m3u8").then(res => res.text());
+
+      const nginxHost = `${this.config.domain}:${this.config.nginx.port}`;
+      const httpHost = `${this.config.domain}:${this.config.http.port}`;
+
+      let upstreamPlaylist = await fetch(`http://${nginxHost}/hls/output.m3u8`).then(res => res.text());
       // #EXT-X-KEY:METHOD=AES-128,URI="{{HLS_KEY_URL,74e5fecc5cd44f017c38f5ee5b87ba27}}",IV=0x390a23ed3ce950443b8cfbb1e56185ea
-      upstreamPlaylist = upstreamPlaylist.replace(/{{HLS_KEY_URL,(.*)}}/g, `http://localhost:8083/viewer_hlskey?envKey=$1&viewId=${viewId}`);
-      upstreamPlaylist = upstreamPlaylist.replace(/(output\d+\.ts)/g, 'http://localhost:8083/hls_ts/$1')
+      upstreamPlaylist = upstreamPlaylist.replace(/{{HLS_KEY_URL,(.*)}}/g, `http://${httpHost}/viewer_hlskey?envKey=$1&viewId=${viewId}`);
+      upstreamPlaylist = upstreamPlaylist.replace(/(output\d+\.ts)/g, `http://${httpHost}/hls_ts/$1`)
 
       return upstreamPlaylist;
     });
@@ -140,7 +144,7 @@ export class HTTPService extends BaseService {
     
     this.fastify.get("/hls_ts/:ts", async (request, reply) => {
       const { ts } = request.params as any;
-      return reply.from(`http://localhost:8084/hls/${ts}`);
+      return reply.from(`http://${this.config.domain}:${this.config.nginx.port}/hls/${ts}`);
     });
 
 

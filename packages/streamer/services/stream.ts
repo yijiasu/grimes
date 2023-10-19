@@ -36,7 +36,7 @@ export class VideoStreamService extends BaseService {
 
   private async spawnNginx() {
     // const configFile = this.config.nginx.configFile;
-    const configFileTemplate = this.config.rootPath + "/nginx/liveserver_template.conf";
+    const configFileTemplate = this.config.rootPath + "/packages/streamer/res/liveserver_template.conf";
     let configFile = fs.readFileSync(configFileTemplate, "utf8").toString();
 
     // TODO: replace the following two lines with the actual command
@@ -47,10 +47,10 @@ export class VideoStreamService extends BaseService {
 
     // TODO: hardcoded key
     const RTMP_PUSH_CMD = `${nodeJsPath} ${codecScriptPath} --ffmpegPath ${ffmpegPath} --streamName $name --masterKey ecd0d06eaf884d8226c33928e87efa33 >/tmp/codec_out.log 2>/tmp/codec_err.log`;
-    const HLS_KEY_ALIAS = "/Users/yijiasu/workspace/ibc/grimes/nginx/hls_key";
+    
     configFile = configFile.replace("<!RTMP_PUSH_CMD!>", RTMP_PUSH_CMD);
-    configFile = configFile.replace("<!HLS_KEY_ALIAS!>", HLS_KEY_ALIAS);
-
+    configFile = configFile.replace("<!NGINX_PORT!>", this.config.nginx.port.toString());
+    
     const tmpConfigFile = `/tmp/liveserver.conf`;
     fs.writeFileSync(tmpConfigFile, configFile);
 
