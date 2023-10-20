@@ -2,7 +2,7 @@
   import { Navbar, NavbarBrand } from "sveltestrap";
 </script>
 
-<video class="bg-video" playsinline autoplay muted loop poster="cake.jpg">
+<video class="bg-video" playsinline autoplay muted loop>
   <source src="bg.mp4" type="video/webm" />
 </video>
 <div class="main-container rounded-3">
@@ -11,7 +11,7 @@
       <!-- rounded-top-3 -->
       <nav class="navbar navbar-expand-bg bg-primary navbar-dark">
         <div class="container-fluid">
-          <a class="navbar-brand" href="/">LN Streaming</a>
+          <a class="navbar-brand" href="/"> ⚡️ LN Streaming</a>
         </div>
       </nav>
     </div>
@@ -123,8 +123,30 @@
   </div>
 </div>
 
-<style>
+<div class="footer">
+  <div class="copyright">
+    <p>Made by Yijia Su</p>
+    <p>❤️</p>
+    <p>
+      Prepared For <br />
+      <a target="_blank" href="https://indonesiabitcoinconference.com/"
+        >Indonesia Bitcoin Conference Hackathon</a
+      >
+    </p>
+  </div>
+</div>
 
+<style>
+  .footer {
+    margin-top: 50px;
+    margin-bottom: 80px;
+  }
+  .footer .copyright {
+    width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
   .main-container {
     z-index: 20;
     margin-left: auto;
@@ -139,20 +161,18 @@
   }
 
   .main-container:before {
-  content: "";
-  position: absolute;
-  background: inherit;
-  z-index: -1;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  box-shadow: inset 0 0 2000px rgba(255, 255, 255, .5);
-  filter: blur(10px);
-  margin: -20px;
-}
-
-
+    content: "";
+    position: absolute;
+    background: inherit;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-shadow: inset 0 0 2000px rgba(255, 255, 255, 0.5);
+    filter: blur(10px);
+    margin: -20px;
+  }
 
   .bg-video {
     object-fit: cover;
@@ -164,8 +184,8 @@
     opacity: 0.7;
     z-index: -1;
   }
-  
-  video {
+
+  #live {
     width: 100%;
   }
   .player-control {
@@ -199,5 +219,4 @@
   .info-session {
     margin-bottom: 20px;
   }
-
 </style>
