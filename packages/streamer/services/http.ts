@@ -174,7 +174,16 @@ export class HTTPService extends BaseService {
       return { status: "ok", paidInvoices: session.paidInvoices };
     });
 
-    
+    this.fastify.get("/get_all_invoice", async (request, reply) => {
+      const { viewerName } = request.query as any;
+      const session = this.viewerSessionService.getSession(viewerName);
+      const allInvoices = [
+        ...session.unpaidInvoices,
+        ...session.paidInvoices,
+      ].sort((a, b) => a.seq - b.seq);
+      return { status: "ok", allInvoices };
+    });
+
 
   }
 }

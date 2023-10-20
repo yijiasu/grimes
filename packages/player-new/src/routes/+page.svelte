@@ -1,10 +1,117 @@
-<script>
+<script lang="ts">
+  import { onMount } from "svelte";
   import { Navbar, NavbarBrand } from "sveltestrap";
+  import type { WebLNProvider } from "@webbtc/webln-types";
+  import { PaidStreamingViewer } from "$lib/paid-streaming-viewer";
+  import { readable, writable } from "svelte/store";
+  import HLS from "hls.js";
+
+  interface DisplayInvoice {
+    seqNum: number;
+    dueAmount: string;
+    issuedAt: string;
+    paymentReq: string;
+    isPaid: boolean;
+  }
+
+  let weblnEnabled = false;
+  let webln: WebLNProvider;
+
+  let walletBalance = 0;
+  let streamerUrl = "http://localhost:8083";
+  let viewerName = "PlayerName";
+
+  let psv: PaidStreamingViewer;
+  let videoPlayer: HTMLVideoElement;
+  let hls: HLS;
+
+  let isStreaming: boolean;
+  let isPaying: boolean;
+
+  const lnBalance = readable(0, function start(set) {
+    const interval = setInterval(async () => {
+      if (weblnEnabled) {
+        const balance = await webln.getBalance();
+        set(balance.balance);
+      }
+    }, 1000);
+    return function stop() {
+      clearInterval(interval);
+    };
+  });
+
+  const invoices = writable([] as Array<DisplayInvoice>);
+
+  onMount(async () => {
+    if (!window.webln) {
+      return;
+    }
+    webln = window.webln;
+    if (webln.isEnabled) {
+      weblnEnabled = await webln.isEnabled();
+      await handleConnectWallet();
+    }
+  });
+
+  function setupPlayer() {
+    hls = new HLS();
+    hls.attachMedia(videoPlayer);
+    hls.on(HLS.Events.MEDIA_ATTACHED, function () {
+      videoPlayer.play();
+    });
+  }
+
+  function setupPSV() {
+    const psv = new PaidStreamingViewer(streamerUrl, viewerName, window.webln!);
+    psv.on("onUpdateInvoices", (e) => {
+      console.log(e.detail);
+      invoices.set(e.detail);
+    });
+    return psv;
+  }
+
+  async function handleConnectWallet() {
+    await webln.enable();
+    if (await webln.getInfo()) {
+      const balance = await webln.getBalance();
+      weblnEnabled = true;
+      walletBalance = balance.balance;
+    }
+  }
+
+  async function handleStartStreaming() {
+    if (!isStreaming) {
+      console.log("start streaming");
+      console.log(videoPlayer);
+      // alert("start streaming " + streamerUrl);
+      setupPlayer();
+      psv = setupPSV();
+      hls.loadSource(await psv.start());
+      isStreaming = true;
+    } else {
+      alert("stop streaming");
+    }
+  }
+
+  async function handleAutoPay() {
+    if (!isStreaming) {
+      return;
+    }
+    
+    if (!isPaying) {
+      psv.enableAutoPay();
+      isPaying = true;
+    } else {
+      psv.disableAutoPay();
+      isPaying = false;
+    }
+  }
 </script>
 
 <video class="bg-video" playsinline autoplay muted loop>
   <source src="bg.mp4" type="video/webm" />
 </video>
+
 <div class="main-container rounded-3">
   <div class="container-fluid">
     <div class="row">
@@ -20,13 +127,20 @@
         <div class="container-fluid">
           <div class="row">
             <div id="player" class="col">
-              <video id="live" controls></video>
+              <video id="live" controls bind:this={videoPlayer}></video>
             </div>
           </div>
           <div class="row">
             <div id="player-control" class="col player-control">
-              <button class="btn btn-success" value="">Start Streaming</button>
-              <button class="btn btn-warning" value="">Start Paying</button>
+              <button
+                class="btn btn-success"
+                value=""
+                on:click={handleStartStreaming}
+                >{isStreaming ? "Stop Streaming" : "Start Streaming"}</button
+              >
+              <button class="btn btn-warning" value="" on:click={handleAutoPay}
+                >{isPaying ? "Stop Paying" : "Start Paying"}</button
+              >
             </div>
           </div>
           <div class="row info-session">
@@ -37,37 +151,58 @@
                   type="text"
                   class="form-control"
                   placeholder="Streamer Address"
+                  bind:value={streamerUrl}
                 />
-                <button
+                <!-- <button
                   class="btn btn-outline-secondary"
                   type="button"
                   id="button-addon2">Confirm</button
-                >
+                > -->
+              </div>
+              <div class="input-group mb-3">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Viewer's Name"
+                  bind:value={viewerName}
+                />
               </div>
             </div>
           </div>
           <div class="row info-session">
             <div class="col">
               <h6 class="text-body-tertiary">WALLET INFO</h6>
-              <div class="container-fluid">
-                <div class="row">
-                  <div class="col-4 p-0">
-                    <div class="wallet-card alert alert-warning" role="alert">
-                      <div class="wallet-balance">400,000</div>
-                      <div>sats</div>
+              {#if !weblnEnabled}
+                <div class="alert alert-warning" role="alert">
+                  <div style="display: flex;">
+                    <div style="flex: 1; line-height: 40px">
+                      WebLN is not enabled. Please connect your wallet.
                     </div>
+                    <button
+                      class="btn btn-warning"
+                      value=""
+                      on:click={handleConnectWallet}>Connect</button
+                    >
                   </div>
-                  <div class="col-8">
+                </div>
+              {:else}
+                <div class="container-fluid">
+                  <div class="row">
+                    <div class="col-4 p-0">
+                      <div class="wallet-card alert alert-warning" role="alert">
+                        <div class="wallet-balance">{$lnBalance}</div>
+                        <div>sats</div>
+                      </div>
+                    </div>
+                    <!-- <div class="col-8">
                     <dl class="row">
                       <dt class="col-sm-4">Wallet Name</dt>
                       <dd class="col-sm-8">test@test.com</dd>
                     </dl>
-                    <!-- <div class="alert alert-warning" role="alert">
-                        A simple warning alert—check it out!
-                      </div> -->
+                  </div> -->
                   </div>
                 </div>
-              </div>
+              {/if}
             </div>
           </div>
           <div class="row info-session">
@@ -93,26 +228,33 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <th scope="row">1</th>
-                    <td>20 sats</td>
-                    <td>1 mins ago</td>
-                    <td>lnc...</td>
-                    <td
-                      ><span class="badge rounded-pill bg-warning text-dark"
-                        >Unpaid</span
-                      >
-                    </td>
-                  </tr>
-                  <tr>
+                  {#each $invoices as invoice}
+                    <tr>
+                      <th scope="row">{invoice.seqNum}</th>
+                      <td>{invoice.dueAmount} sats</td>
+                      <td>{invoice.issuedAt}</td>
+                      <td class="ln-request">{invoice.paymentReq}</td>
+                      <td>
+                        {#if invoice.isPaid}
+                          <span class="badge rounded-pill bg-success">Paid</span
+                          >
+                        {:else}
+                          <span class="badge rounded-pill bg-warning text-dark"
+                            >Unpaid</span
+                          >
+                        {/if}
+                      </td>
+                    </tr>
+                  {/each}
+                  <!-- <tr>
                     <th scope="row">2</th>
                     <td>Jacob</td>
                     <td>Thornton</td>
-                    <td>lnc...</td>
+                    <td class="ln-request">lnsadasdasdasdasdadasdasdasdasclnsadasdasdasdasdadasdasdasdasclnsadasdasdasdasdadasdasdasdasclnsadasdasdasdasdadasdasdasdasc...</td>
                     <td
                       ><span class="badge rounded-pill bg-success">Paid</span>
                     </td>
-                  </tr>
+                  </tr> -->
                 </tbody>
               </table>
             </div>
@@ -218,5 +360,11 @@
 
   .info-session {
     margin-bottom: 20px;
+  }
+
+  .ln-request {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

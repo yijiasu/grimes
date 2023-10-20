@@ -22,6 +22,9 @@
   },
   "type": "module",
   "dependencies": {
+    "@grimes/common": "workspace:^",
+    "@webbtc/webln-types": "^2.0.1",
+    "hls.js": "^1.4.12",
     "sveltestrap": "^5.11.2"
   }
 }
