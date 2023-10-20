@@ -40,7 +40,7 @@ class ViewerSession {
   }
 
   public isHealthy() {
-    if (this.unpaidInvoices.length >=  this.config.viewer.unhealthyInvoiceCount) {
+    if (this.unpaidInvoices.length >= this.config.viewer.unhealthyInvoiceCount) {
       return false;
     }
     return true;
@@ -116,15 +116,6 @@ export class ViewerSessionService extends BaseService {
     try {
       this.logger.info(`Running runloop`);
       for (const [viewerName, session] of this.sessions.entries()) {
-        if ((new Date()).getTime() - session.lastPingedAt.getTime() > this.config.viewer.staleViewerTimeout) {
-          this.logger.error(`Viewer ${viewerName} is stale, skipping sending invoice to him`);
-          continue;
-        }
-
-        if (!session.isHealthy()) {
-          this.logger.error(`Viewer ${viewerName} is not healthy, skipping sending invoice to him`);
-          continue;
-        }
 
         // check if unpaid invoices are paid
         for (const unpaidInvoice of session.unpaidInvoices) {
@@ -133,6 +124,16 @@ export class ViewerSessionService extends BaseService {
           if (paid) {
             session.setInvoicePaid(unpaidInvoice);
           }
+        }
+
+        if ((new Date()).getTime() - session.lastPingedAt.getTime() > this.config.viewer.staleViewerTimeout) {
+          this.logger.error(`Viewer ${viewerName} is stale, skipping sending invoice to him`);
+          continue;
+        }
+
+        if (!session.isHealthy()) {
+          this.logger.error(`Viewer ${viewerName} is not healthy, skipping sending invoice to him`);
+          continue;
         }
 
         // ask for a payment

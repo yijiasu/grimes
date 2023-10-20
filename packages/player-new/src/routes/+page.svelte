@@ -60,7 +60,10 @@
   });
 
   function setupPlayer() {
-    hls = new HLS();
+    hls = new HLS({
+      liveDurationInfinity: true,
+      liveSyncDurationCount: 0
+    });
     hls.attachMedia(videoPlayer);
     hls.on(HLS.Events.MEDIA_ATTACHED, function () {
       videoPlayer.play();

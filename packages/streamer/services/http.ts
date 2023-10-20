@@ -149,7 +149,7 @@ export class HTTPService extends BaseService {
       const session = this.viewerSessionService.getSession(viewerName);
       if (!session.isHealthy()) {
         this.logger.error(`Viewer ${viewerName} is not healthy. Asking for HLS Key will be rejected`);
-        reply.code(402).type("text/plain").send("402 Payment Required: Too many invoice unpaid");
+        return reply.code(402).type("text/plain").send("402 Payment Required: Too many invoice unpaid");
       }
       return segKey;
     });

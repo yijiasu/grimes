@@ -77,7 +77,7 @@ async function main(argv) {
 
   // const keyInfoPath = "/Users/yijiasu/workspace/ibc/grimes/nginx/hls_key/enc.keyinfo";
 
-  const RTMP_PUSH_CMD = `-i rtmp://localhost/rtmp_push/${streamName} -c:v libx264 -c:a aac -strict -2 -f hls -hls_key_info_file ${keyInfoPath} -hls_flags periodic_rekey -hls_list_size 0 -hls_time 2 /tmp/hls/output.m3u8`;
+  const RTMP_PUSH_CMD = `-i rtmp://localhost/rtmp_push/${streamName} -c:v libx264 -c:a aac -strict -2 -g 30 -f hls -hls_list_size 3 -hls_key_info_file ${keyInfoPath} -hls_flags delete_segments+periodic_rekey -hls_time 0 /tmp/hls/output.m3u8`;
 
   // write first key info
   keyInfoRotateHandler(masterKeyBuf);

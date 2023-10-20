@@ -81,7 +81,7 @@ export class StreamerConfig implements IServiceConfig {
         staleViewerTimeout: Number(envWithDefault("STALE_VIEWER_TIMEOUT", 120000)),
 
         // If the viewer has this many unpaid invoices, the streamer will stop providing decryption keys for video
-        unhealthyInvoiceCount: Number(envWithDefault("UNHEALTHY_INVOICE_COUNT", 1)),
+        unhealthyInvoiceCount: Number(envWithDefault("UNHEALTHY_INVOICE_COUNT", 2)),
 
         // This is the master key for deriving the segment keys
         masterKey: envWithDefault("VIEWER_MASTER_KEY", "ecd0d06eaf884d8226c33928e87efa33"),
