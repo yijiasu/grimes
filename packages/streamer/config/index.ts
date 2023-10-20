@@ -19,8 +19,12 @@ interface IConfigHttp {
 }
 
 interface IConfigViewer {
+  runloopCheckInterval: number;
   invoiceInterval: number;
   staleViewerTimeout: number;
+  unhealthyInvoiceCount: number;
+  satsPerInvoice: number;
+  masterKey: string;
 }
 
 export interface IServiceConfig {
@@ -64,9 +68,23 @@ export class StreamerConfig implements IServiceConfig {
         zbdApiKey: mustDefineEnv("ZBD_API_KEY"),
       },
       viewer: {
+        // This is how frequently we will check for payment
+        runloopCheckInterval: Number(envWithDefault("RUNLOOP_CHECK_INTERVAL", 20000)),
+
         // This is how frequently the streamer will send invoices to the viewer
-        invoiceInterval: Number(envWithDefault("INVOICE_INTERVAL", 5000)),
+        invoiceInterval: Number(envWithDefault("INVOICE_INTERVAL", 30000)),
+
+        // This is how much we are charging per invoice
+        satsPerInvoice: Number(envWithDefault("SATS_PER_INVOICE", 10)),
+
+        // If the viewer does not ping the streamer for this long, the streamer will stop sending invoices
         staleViewerTimeout: Number(envWithDefault("STALE_VIEWER_TIMEOUT", 120000)),
+
+        // If the viewer has this many unpaid invoices, the streamer will stop providing decryption keys for video
+        unhealthyInvoiceCount: Number(envWithDefault("UNHEALTHY_INVOICE_COUNT", 1)),
+
+        // This is the master key for deriving the segment keys
+        masterKey: envWithDefault("VIEWER_MASTER_KEY", "ecd0d06eaf884d8226c33928e87efa33"),
       }
     });
   }

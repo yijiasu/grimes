@@ -46,7 +46,8 @@ export class VideoStreamService extends BaseService {
     const ffmpegPath = shelljs.which("ffmpeg").toString();
 
     // TODO: hardcoded key
-    const RTMP_PUSH_CMD = `${nodeJsPath} ${codecScriptPath} --ffmpegPath ${ffmpegPath} --streamName $name --masterKey ecd0d06eaf884d8226c33928e87efa33 >/tmp/codec_out.log 2>/tmp/codec_err.log`;
+    const masterKey = this.config.viewer.masterKey;
+    const RTMP_PUSH_CMD = `${nodeJsPath} ${codecScriptPath} --ffmpegPath ${ffmpegPath} --streamName $name --masterKey ${masterKey} >/tmp/codec_out.log 2>/tmp/codec_err.log`;
     
     configFile = configFile.replace("<!RTMP_PUSH_CMD!>", RTMP_PUSH_CMD);
     configFile = configFile.replace("<!NGINX_PORT!>", this.config.nginx.port.toString());

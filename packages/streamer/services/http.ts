@@ -11,6 +11,7 @@ import { VideoStreamService } from "./stream";
 import { PaymentService } from "./payment";
 import { bufferXor } from "@grimes/common";
 import { ViewerSessionService } from "./viewer_session";
+import fastifyRequestLogger from "@mgcrea/fastify-request-logger";
 
 export class HTTPService extends BaseService {
   private fastify: FastifyInstance;
@@ -21,8 +22,16 @@ export class HTTPService extends BaseService {
   constructor(config: StreamerConfig) {
     super(config, "HTTPService");
     this.fastify = Fastify({
-      logger: false,
-    });
+      logger: {
+        level: "debug",
+        transport: {
+          target: "@mgcrea/pino-pretty-compact",
+          options: { translateTime: "HH:MM:ss Z", ignore: "pid,hostname" },
+        },
+      },
+      disableRequestLogging: true,
+      });
+    this.fastify.register(fastifyRequestLogger);
     this.fastify.register(cors, { origin: "*" });
     this.setupRoutes();
   }
@@ -92,16 +101,6 @@ export class HTTPService extends BaseService {
       return { "status": "ok" };
     });
 
-    // this function is called by streamer client to check if the invoice is paid
-    this.fastify.get("/check_invoice", async (request, reply) => {
-      return { "status": "ok" };
-    });
-
-    // this function is called by the viewer to fetch the hls key for video segment decryption
-    this.fastify.get("/hlskey", async (request, reply) => {
-      this.logger.info("Recv hls key request from viewer");
-      return "ecd0d06eaf884d8226c33928e87efa33";
-    });
 
     // this function is called by the viewer to fetch the hls key for video segment decryption
     this.fastify.post("/viewer_start", async (request, reply) => {
@@ -121,7 +120,7 @@ export class HTTPService extends BaseService {
       const httpHost = `${this.config.domain}:${this.config.http.port}`;
 
       let upstreamPlaylist = await fetch(`http://${nginxHost}/hls/output.m3u8`).then(res => res.text());
-      // #EXT-X-KEY:METHOD=AES-128,URI="{{HLS_KEY_URL,74e5fecc5cd44f017c38f5ee5b87ba27}}",IV=0x390a23ed3ce950443b8cfbb1e56185ea
+
       upstreamPlaylist = upstreamPlaylist.replace(/{{HLS_KEY_URL,(.*)}}/g, `http://${httpHost}/viewer_hlskey?envKey=$1&viewerName=${viewerName}`);
       upstreamPlaylist = upstreamPlaylist.replace(/(output\d+\.ts)/g, `http://${httpHost}/hls_ts/$1`)
 
@@ -144,8 +143,14 @@ export class HTTPService extends BaseService {
       // e.g. if the viewer has too many unpaid invoices, we should not give the segKey and cut the stream
 
       // TODO: hardcoded masterKey
-      const masterKey = "ecd0d06eaf884d8226c33928e87efa33"
+      const masterKey = this.config.viewer.masterKey;
       const segKey = bufferXor(Buffer.from(envKey, "hex"), Buffer.from(masterKey, "hex")).toString("hex");
+
+      const session = this.viewerSessionService.getSession(viewerName);
+      if (!session.isHealthy()) {
+        this.logger.error(`Viewer ${viewerName} is not healthy. Asking for HLS Key will be rejected`);
+        reply.code(402).type("text/plain").send("402 Payment Required: Too many invoice unpaid");
+      }
       return segKey;
     });
     

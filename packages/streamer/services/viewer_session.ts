@@ -40,7 +40,7 @@ class ViewerSession {
   }
 
   public isHealthy() {
-    if (this.unpaidInvoices.length > 5) {
+    if (this.unpaidInvoices.length >=  this.config.viewer.unhealthyInvoiceCount) {
       return false;
     }
     return true;
@@ -67,7 +67,7 @@ export class ViewerSessionService extends BaseService {
   }
   protected async onServiceStart(): Promise<void> {
     this.ps = this.serviceManager.getService("PaymentService");
-    setIntervalAsync(this.runloop.bind(this), 30000);
+    setIntervalAsync(this.runloop.bind(this), this.config.viewer.runloopCheckInterval);
   }
   protected async onServiceStop(): Promise<void> {}
 
@@ -121,6 +121,11 @@ export class ViewerSessionService extends BaseService {
           continue;
         }
 
+        if (!session.isHealthy()) {
+          this.logger.error(`Viewer ${viewerName} is not healthy, skipping sending invoice to him`);
+          continue;
+        }
+
         // check if unpaid invoices are paid
         for (const unpaidInvoice of session.unpaidInvoices) {
           const paid = await this.ps.checkInvoicePaid(unpaidInvoice);
@@ -136,7 +141,8 @@ export class ViewerSessionService extends BaseService {
         }
         const invoice = await this.ps.createInvoice(
           session.invoiceCount() + 1,
-          20, `${viewerName}-${session.invoiceCount()}`
+          this.config.viewer.satsPerInvoice,
+          `${viewerName}-${session.invoiceCount()}`
         );
 
         session.appendInvoice(invoice);
