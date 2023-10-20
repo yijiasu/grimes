@@ -60,7 +60,7 @@ export class VideoStreamService extends BaseService {
       nginxLogger.error(data);
     });
     this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
-      nginxLogger.info(data);
+      // nginxLogger.info(data);
     });
   }
 

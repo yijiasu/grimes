@@ -3,7 +3,7 @@
   import { Navbar, NavbarBrand } from "sveltestrap";
   import type { WebLNProvider } from "@webbtc/webln-types";
   import { PaidStreamingViewer } from "$lib/paid-streaming-viewer";
-  import { readable, writable } from "svelte/store";
+  import { derived, readable, writable } from "svelte/store";
   import HLS from "hls.js";
 
   interface DisplayInvoice {
@@ -41,6 +41,12 @@
   });
 
   const invoices = writable([] as Array<DisplayInvoice>);
+  const invoicePaidCount = derived(invoices, ($invoices) => {
+    return $invoices.filter((invoice) => invoice.isPaid).length;
+  });
+  const invoicePendingCount = derived(invoices, ($invoices) => {
+    return $invoices.filter((invoice) => !invoice.isPaid).length;
+  });
 
   onMount(async () => {
     if (!window.webln) {
@@ -97,7 +103,7 @@
     if (!isStreaming) {
       return;
     }
-    
+
     if (!isPaying) {
       psv.enableAutoPay();
       isPaying = true;
@@ -138,9 +144,9 @@
                 on:click={handleStartStreaming}
                 >{isStreaming ? "Stop Streaming" : "Start Streaming"}</button
               >
-              <button class="btn btn-warning" value="" on:click={handleAutoPay}
+              <!-- <button class="btn btn-warning" value="" on:click={handleAutoPay}
                 >{isPaying ? "Stop Paying" : "Start Paying"}</button
-              >
+              > -->
             </div>
           </div>
           <div class="row info-session">
@@ -187,19 +193,34 @@
                 </div>
               {:else}
                 <div class="container-fluid">
-                  <div class="row">
+                  <div class="row" style="display: flex; align-items: stretch">
                     <div class="col-4 p-0">
                       <div class="wallet-card alert alert-warning" role="alert">
                         <div class="wallet-balance">{$lnBalance}</div>
                         <div>sats</div>
                       </div>
                     </div>
-                    <!-- <div class="col-8">
-                    <dl class="row">
-                      <dt class="col-sm-4">Wallet Name</dt>
-                      <dd class="col-sm-8">test@test.com</dd>
-                    </dl>
-                  </div> -->
+                    <div class="col-8">
+                      <dl class="row">
+                        <dt class="col-sm-5">Autopay Invoices</dt>
+                        <dd class="col-sm-7">
+                          <div class="form-check form-switch">
+                            <input
+                              disabled={!isStreaming}
+                              class="form-check-input"
+                              type="checkbox"
+                              role="switch"
+                              on:change={handleAutoPay}
+                            />
+                          </div>
+                        </dd>
+                        <dt class="col-sm-5">Invoices Paid</dt>
+                        <dd class="col-sm-7">{$invoicePaidCount}</dd>
+                        <dt class="col-sm-5">Invoices Pending</dt>
+                        <dd class="col-sm-7">{$invoicePendingCount}</dd>
+
+                      </dl>
+                    </div>
                   </div>
                 </div>
               {/if}
@@ -211,11 +232,6 @@
                 <h6 style="flex-grow: 1" class="text-body-tertiary">
                   INVOICE INFO
                 </h6>
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary btn-sm rounded-pill"
-                  >Clear</button
-                >
               </div>
               <table class="table">
                 <thead>
@@ -293,7 +309,7 @@
     z-index: 20;
     margin-left: auto;
     margin-right: auto;
-    width: 720px;
+    width: 780px;
     margin-top: 100px;
     position: relative;
     z-index: 1;

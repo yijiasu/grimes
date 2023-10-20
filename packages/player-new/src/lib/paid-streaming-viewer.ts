@@ -2,6 +2,7 @@ import type { Invoice } from "@grimes/common/model";
 import { AbstractNetClient } from "@grimes/common/net-client";
 import type { WebLNProvider } from "@webbtc/webln-types";
 import { setIntervalAsync } from "set-interval-async/dynamic";
+import _ from "lodash";
 
 class ViewerNetClient extends AbstractNetClient {
   public async startViewerSession(viewerName: string) {
@@ -12,6 +13,16 @@ class ViewerNetClient extends AbstractNetClient {
     return this.httpPostRequest("stop_viewer_session", { viewerName });
   }
 
+  public async getPaidInvoices(viewerName: string) {
+    return this.httpGetRequest("get_paid_invoice", { viewerName }).then(
+      (res) => res.paidInvoices,
+    );
+  }
+  public async getPendingInvoices(viewerName: string): Promise<Array<Invoice>> {
+    return this.httpGetRequest("get_pending_invoice", { viewerName }).then(
+      (res) => res.pendingInvoices,
+    );
+  }
   public async getAllInvoices(viewerName: string): Promise<Array<Invoice>> {
     return this.httpGetRequest("get_all_invoice", { viewerName }).then(
       (res) => res.allInvoices,
@@ -46,7 +57,7 @@ export class PaidStreamingViewer extends EventEmitter {
     const session = await this.netClient.startViewerSession(this.viewerName);
     console.log(session);
 
-    setIntervalAsync(this.runloop.bind(this), 5000);
+    setIntervalAsync(this.runloop.bind(this), 1000);
     return session.playlist;
   }
 
@@ -62,43 +73,49 @@ export class PaidStreamingViewer extends EventEmitter {
 
   private async runloop() {
     try {
-      // const pendingInvoices = await this.netClient
-      //   .getPendingInvoices(this.viewerName)
-      //   .then((invoices) =>
-      //     invoices.filter(
-      //       (invoice) => !this.paidInvoiceIds.includes(invoice.id)
-      //     )
-      //   );
-      // const paidInvoices = await this.netClient.getPaidInvoices(this.viewerName);
 
-      // this.emit("onUpdatePendingInvoices", pendingInvoices);
-      // this.emit("onUpdatePaidInvoices", paidInvoices);
-      const allInvoices = await this.netClient.getAllInvoices(this.viewerName);
+      const paidInvoices = await this.netClient.getPaidInvoices(
+        this.viewerName,
+      );
+      const pendingInvoices = await this.netClient.getPendingInvoices(
+        this.viewerName,
+      );
+
+      for (const invoice of paidInvoices) {
+        if (!this.paidInvoiceIds.includes(invoice.id)) {
+          this.paidInvoiceIds.push(invoice.id);
+        }
+      }
+
+      const unpaidInvoices = pendingInvoices.filter(
+        (invoice) => !this.paidInvoiceIds.includes(invoice.id),
+      );
+
+      // console.log("unpaidInvoices", unpaidInvoices);
+      if (unpaidInvoices.length > 0 && this.autoPayEnabled) {
+        this.payInvoices(unpaidInvoices[0]);
+      }
 
       this.emit(
         "onUpdateInvoices",
-        allInvoices.map((invoice) => ({
-          seqNum: invoice.seq,
-          dueAmount: invoice.amount,
-          issuedAt: invoice.createdAt,
-          paymentReq: invoice.request,
-          isPaid: this.paidInvoiceIds.includes(invoice.id),
-        })),
+        _.sortBy([...paidInvoices, ...pendingInvoices], (e) => -e.seq).map(
+          (invoice) => ({
+            seqNum: invoice.seq,
+            dueAmount: invoice.amount,
+            issuedAt: invoice.createdAt,
+            paymentReq: invoice.request,
+            isPaid: this.paidInvoiceIds.includes(invoice.id),
+          }),
+        ),
       );
 
-      const unpaidInvoices = allInvoices.filter(
-        (invoice) => !this.paidInvoiceIds.includes(invoice.id),
-      );
-      if (unpaidInvoices.length > 0 && this.autoPayEnabled) {
-        this.payInvoices(unpaidInvoices);
-      }
+
     } catch (error) {
       console.log(error);
     }
   }
 
-  private async payInvoices(invoices: Array<Invoice>) {
-    const invoice = invoices.shift();
+  private async payInvoices(invoice: Invoice) {
     this.webln
       .sendPayment(invoice.request)
       .then((res) => {
@@ -107,7 +124,12 @@ export class PaidStreamingViewer extends EventEmitter {
         this.paidInvoiceIds.push(invoice.id);
       })
       .catch((err) => {
-        console.log(err);
+        if (err.message.includes("paid")) {
+          console.log("already paid invoice. ignore.");
+        }
+        else {
+          console.log(err);
+        }
       });
   }
 }
