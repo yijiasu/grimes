@@ -1,7 +1,14 @@
 <script>
-  import { Button } from 'sveltestrap';
-
+  import { Navbar, NavbarBrand, Container, Row, Col } from "sveltestrap";
 </script>
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
-<Button />
+
+<Container md>
+  <Row>
+    <Col sm={{ size: 8, offset: 2 }}>
+      <Navbar color="primary" dark expand="bg">
+        <NavbarBrand href="/">LN Streaming</NavbarBrand>
+      </Navbar>
+    </Col>
+  </Row>
+  <Row>Test</Row>
+</Container>
