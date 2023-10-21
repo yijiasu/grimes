@@ -6,5 +6,5 @@ Stream-To-Earn is a live streaming platform using decentralized technologies (Li
 
 ## Diagrams
 
-<img width="1071" alt="Screenshot 2023-10-21 at 8 43 29 PM" src="https://github.com/yijiasu/grimes/assets/4447759/d69dffaa-6840-4530-bb30-dee9cceff91e">
 
+![STE](https://github.com/yijiasu/grimes/assets/4447759/3841d1d7-823e-4de1-8aea-9ef8e2c17d5f)
