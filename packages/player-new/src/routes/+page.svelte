@@ -18,7 +18,7 @@
   let webln: WebLNProvider;
 
   let walletBalance = 0;
-  let streamerUrl = "http://localhost:8083";
+  let streamerUrl = "https://ste-streamer.yijiasu.me";
   let viewerName = "PlayerName";
 
   let psv: PaidStreamingViewer;

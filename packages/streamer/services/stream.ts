@@ -60,16 +60,16 @@ export class VideoStreamService extends BaseService {
     const tmpConfigFile = `/tmp/liveserver.conf`;
     fs.writeFileSync(tmpConfigFile, configFile);
 
-    this.nginxProcess = spawn("nginx", ["-c", tmpConfigFile], { stdio: "pipe" });
-    const nginxLogger = new Logger("Nginx");
-    this.nginxProcess.stderr.pipe(split2()).on("data", (data) => {
-      nginxLogger.error(data);
-    });
-    if (this.config.nginx.enableLogging) {
-      this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
-        nginxLogger.info(data);
-      });
-    }
+    this.nginxProcess = spawn("/usr/sbin/nginx", ["-c", tmpConfigFile], { stdio: "inherit" });
+    // const nginxLogger = new Logger("Nginx");
+    // this.nginxProcess.stderr.pipe(split2()).on("data", (data) => {
+    //   nginxLogger.error(data);
+    // });
+    // if (this.config.nginx.enableLogging) {
+    //   this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
+    //     nginxLogger.info(data);
+    //   });
+    // }
   }
 
   public startSessionForClient(clientName: string): Broadcaster {
