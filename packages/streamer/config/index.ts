@@ -20,6 +20,7 @@ interface IConfigHttp {
 }
 
 interface IConfigViewer {
+  playlistBaseUrl: string
   runloopCheckInterval: number;
   invoiceInterval: number;
   staleViewerTimeout: number;
@@ -70,6 +71,7 @@ export class StreamerConfig implements IServiceConfig {
         zbdApiKey: mustDefineEnv("ZBD_API_KEY"),
       },
       viewer: {
+        playlistBaseUrl: envWithDefault("PLAYLIST_BASE_URL", "http://localhost:8083"),
         // This is how frequently we will check for payment
         runloopCheckInterval: Number(envWithDefault("RUNLOOP_CHECK_INTERVAL", 20000)),
 

@@ -20,7 +20,7 @@ class ViewerSession {
     this.lastInvoicedAt = new Date();
   }
   public getPlaylistUrl() {
-    return `http://${this.config.domain}:${this.config.http.port}/viewer_playlist?viewerName=${this.sessionId}`;
+    return `${this.config.viewer.playlistBaseUrl}/viewer_playlist?viewerName=${this.sessionId}`;
   }
   public ping() {
     this.lastPingedAt = new Date();
