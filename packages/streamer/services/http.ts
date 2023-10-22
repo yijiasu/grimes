@@ -165,7 +165,7 @@ export class HTTPService extends BaseService {
     this.fastify.post("/start_viewer_session", async (request, reply) => {
       const { viewerName } = request.body as any;
       const session = this.viewerSessionService.startSession(viewerName);
-      return { playlist: session.getPlaylistUrl() };
+      return { viewerName, playlist: session.getPlaylistUrl() };
     });
 
     this.fastify.get("/get_pending_invoice", async (request, reply) => {
