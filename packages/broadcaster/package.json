@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "ts-node broadcaster.ts",
     "test": "mocha test/**/*.ts",
+    "build": "esbuild ./broadcaster.ts --bundle --platform=node --external:shelljs --outfile=./dist/bundle.js",
+    "prod:run": "pnpm build && node ./dist/bundle.js",
     "local-push": "pnpm dev --disableInvoice --url=http://localhost:8083 --file"
   },
   "keywords": [],

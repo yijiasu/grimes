@@ -5,6 +5,8 @@
   "main": "streamer.ts",
   "scripts": {
     "dev": "ts-node streamer.ts",
+    "build": "esbuild ./streamer.ts --bundle --platform=node --external:shelljs --outfile=./dist/bundle.js",
+    "prod:run": "pnpm build && node ./dist/bundle.js",
     "test": "mocha test/**/*.ts"
   },
   "keywords": [],
