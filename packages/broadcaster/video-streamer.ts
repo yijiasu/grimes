@@ -51,6 +51,7 @@ export class VideoStreamer {
     // -loglevel error -hide_banner -progress pipe:1
     // ffmpeg -re -i 1.mp4 -c:v copy -c:a aac -strict -2 -f flv rtmp://localhost/rtmp_push/default
     this.ffmpeg = spawn("ffmpeg", [
+      "-stream_loop", "-1",
       "-loglevel", "error",
       "-hide_banner",
       "-progress", "pipe:1",
