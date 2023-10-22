@@ -19,9 +19,6 @@
 
   let walletBalance = 0;
   let streamerUrl = "https://ste-streamer.yijiasu.me";
-  if (window) {
-    streamerUrl = window.location.href.includes("localhost") ? "http://localhost:8083" : "https://ste-streamer.yijiasu.me";
-  }
 
   let viewerName = "PlayerName";
 
@@ -70,6 +67,9 @@
   });
 
   onMount(async () => {
+    if (window) {
+      streamerUrl = window.location.href.includes("localhost") ? "http://localhost:8083" : "https://ste-streamer.yijiasu.me";
+    }
     if (!window.webln) {
       return;
     }
