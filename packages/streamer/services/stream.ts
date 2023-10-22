@@ -7,6 +7,7 @@ import { Logger } from "@grimes/common/logger";
 import { Broadcaster } from "../model";
 import fs from "node:fs";
 import shelljs from "shelljs";
+import os from "node:os";
 
 export class VideoStreamService extends BaseService {
   private nginxProcess: ChildProcess;
@@ -52,6 +53,10 @@ export class VideoStreamService extends BaseService {
     configFile = configFile.replace("<!RTMP_PUSH_CMD!>", RTMP_PUSH_CMD);
     configFile = configFile.replace("<!NGINX_PORT!>", this.config.nginx.port.toString());
     
+    if (os.platform() !== "darwin") {
+      configFile = "load_module modules/ngx_rtmp_module.so;\n" + configFile;
+    }
+
     const tmpConfigFile = `/tmp/liveserver.conf`;
     fs.writeFileSync(tmpConfigFile, configFile);
 
@@ -60,9 +65,11 @@ export class VideoStreamService extends BaseService {
     this.nginxProcess.stderr.pipe(split2()).on("data", (data) => {
       nginxLogger.error(data);
     });
-    this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
-      // nginxLogger.info(data);
-    });
+    if (this.config.nginx.enableLogging) {
+      this.nginxProcess.stdout.pipe(split2()).on("data", (data) => {
+        nginxLogger.info(data);
+      });
+    }
   }
 
   public startSessionForClient(clientName: string): Broadcaster {

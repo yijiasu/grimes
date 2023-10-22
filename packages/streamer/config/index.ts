@@ -8,6 +8,7 @@ interface IConfigNginx {
   port: number;
   configFile: string;
   rtmpUrl: string;
+  enableLogging: boolean;
 }
 
 interface IConfigLN {
@@ -63,6 +64,7 @@ export class StreamerConfig implements IServiceConfig {
         port: Number(envWithDefault("NGINX_PORT", 8084)),
         configFile: mustDefineEnv("NGINX_CONFIG_FILE"),
         rtmpUrl: envWithDefault("RTMP_URL", "rtmp://localhost/rtmp_push/"),
+        enableLogging: Number(envWithDefault("ENABLE_NGINX_LOGGING", 0)) === 1,
       },
       ln: {
         zbdApiKey: mustDefineEnv("ZBD_API_KEY"),
