@@ -74,7 +74,7 @@ export class VideoStreamService extends BaseService {
 
   public startSessionForClient(clientName: string): Broadcaster {
     if (this.broadcaster.has(clientName)) {
-      throw new Error("Broadcaster already exists");
+      return this.broadcaster.get(clientName);
     }
     const broadcaster = new Broadcaster(clientName, this.config.nginx.rtmpUrl);
     this.broadcaster.set(clientName, broadcaster);
