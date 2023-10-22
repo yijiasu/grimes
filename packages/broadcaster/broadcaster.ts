@@ -11,7 +11,7 @@ const logger = new Logger("Broadcaster");
 
 
 async function main(argv: Record<string, any>) {
-  const { url, file } = argv;
+  const { url, file, disableInvoice } = argv;
   if (!url) {
     logger.panic("No URL provided");
   }
@@ -38,19 +38,24 @@ async function main(argv: Record<string, any>) {
   vs.attachRtmp(rtmpPushUrl);
   vs.start();
 
-  const pc = new PaymentCollector(zbdApiKey);
+  if (!disableInvoice) {
+    const pc = new PaymentCollector(zbdApiKey);
 
-  while (true) {
-    await sleep(60000);
-    logger.info("Runloop started");
-    pc.printStatus();
+    while (true) {
+      await sleep(60000);
+      logger.info("Runloop started");
+      pc.printStatus();
 
-    // 1. send new invoice
-    // 2. check our previous invoice is paid, otherwise we stop our video streaming
+      // 1. send new invoice
+      // 2. check our previous invoice is paid, otherwise we stop our video streaming
 
-    const invoice = await pc.createInvoice();
-    // console.log(invoice);
-    await netClient.sendInvoice(invoice.request);
+      const invoice = await pc.createInvoice();
+      // console.log(invoice);
+      await netClient.sendInvoice(invoice.request);
+    }
+  }
+  else {
+    logger.info("Invoice disabled. We will not charge the streamer.");
   }
 }
 

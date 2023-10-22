@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node broadcaster.ts",
     "test": "mocha test/**/*.ts",
-    "local-push": "pnpm dev --url=http://localhost:8083 --file"
+    "local-push": "pnpm dev --disableInvoice --url=http://localhost:8083 --file"
   },
   "keywords": [],
   "author": "",
