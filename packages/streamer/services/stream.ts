@@ -54,7 +54,7 @@ export class VideoStreamService extends BaseService {
     configFile = configFile.replace("<!NGINX_PORT!>", this.config.nginx.port.toString());
     
     if (os.platform() !== "darwin") {
-      configFile = "load_module modules/ngx_rtmp_module.so;\n" + configFile;
+      configFile = "load_module modules/ngx_rtmp_module.so;\npid /tmp/nginx.pid;\n" + configFile;
     }
 
     const tmpConfigFile = `/tmp/liveserver.conf`;
