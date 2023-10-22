@@ -20,7 +20,7 @@
   let walletBalance = 0;
   let streamerUrl = "https://ste-streamer.yijiasu.me";
 
-  let viewerName = "PlayerName";
+  let viewerName = `PlayerName-${Math.random().toString(16).substring(2, 6)}`;
 
   let psv: PaidStreamingViewer;
   let videoPlayer: HTMLVideoElement;
