@@ -60,7 +60,7 @@ export class VideoStreamService extends BaseService {
     const tmpConfigFile = `/tmp/liveserver.conf`;
     fs.writeFileSync(tmpConfigFile, configFile);
 
-    this.nginxProcess = spawn("/usr/sbin/nginx", ["-c", tmpConfigFile], { stdio: "inherit" });
+    this.nginxProcess = spawn("nginx", ["-c", tmpConfigFile], { stdio: "inherit" });
     // const nginxLogger = new Logger("Nginx");
     // this.nginxProcess.stderr.pipe(split2()).on("data", (data) => {
     //   nginxLogger.error(data);

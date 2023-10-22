@@ -18,7 +18,8 @@
   let webln: WebLNProvider;
 
   let walletBalance = 0;
-  let streamerUrl = "https://ste-streamer.yijiasu.me";
+  let streamerUrl = "http://localhost:8083"
+  // let streamerUrl = "https://ste-streamer.yijiasu.me";
   let viewerName = "PlayerName";
 
   let psv: PaidStreamingViewer;
@@ -27,6 +28,7 @@
 
   let isStreaming: boolean;
   let isPaying: boolean;
+  let isRecovering: boolean = false;
 
   const lnBalance = readable(0, function start(set) {
     const interval = setInterval(async () => {
@@ -48,6 +50,22 @@
     return $invoices.filter((invoice) => !invoice.isPaid).length;
   });
 
+  let lastDecryptionKey: string = "";
+  const lastDecryptionKeySeen = writable(undefined as Date | undefined);
+  const lastDecryptionKeySeenSeconds = readable(0, function start(set) {
+    const interval = setInterval(() => {
+      if (!$lastDecryptionKeySeen) {
+        return;
+      }
+      const now = new Date();
+      const diff = now.getTime() - $lastDecryptionKeySeen.getTime();
+      set(Math.floor(diff / 1000));
+    }, 1000);
+    return function stop() {
+      clearInterval(interval);
+    };
+  });
+
   onMount(async () => {
     if (!window.webln) {
       return;
@@ -59,6 +77,23 @@
     }
   });
 
+  function startHlsRecovery() {
+    const interval = setInterval(async () => {
+      if (!isRecovering) {
+        return;
+      }
+      try {
+        console.log("try to recover");
+        hls.attachMedia(videoPlayer);
+        hls.loadSource(await psv.start());
+        await videoPlayer.play();
+        clearInterval(interval);
+      } catch (error) {
+        console.log("recover failed");
+        console.log(error);
+      }
+    }, 3000);
+  }
   function setupPlayer() {
     hls = new HLS({
       liveDurationInfinity: true,
@@ -67,6 +102,44 @@
     hls.attachMedia(videoPlayer);
     hls.on(HLS.Events.MEDIA_ATTACHED, function () {
       videoPlayer.play();
+    });
+    hls.on(HLS.Events.KEY_LOADED, function (event, data) {
+      if (data.keyInfo.decryptdata.uri === lastDecryptionKey) {
+        return;
+      }
+      if (isRecovering) {
+        isRecovering = false;
+      }
+      console.log("key loaded");
+      console.log(data);
+      lastDecryptionKey = data.keyInfo.decryptdata.uri;
+      lastDecryptionKeySeen.set(new Date());
+    });
+    hls.on(HLS.Events.ERROR, function (event, data) {
+      console.log("HLS Error: ");
+      console.log(data);
+      if (data.fatal) {
+        isRecovering = true;
+        videoPlayer.pause();
+        startHlsRecovery();
+      }
+      // if (data.fatal) {
+      //   switch (data.type) {
+      //     case HLS.ErrorTypes.NETWORK_ERROR:
+      //       // try to recover network error
+      //       console.log("fatal network error encountered, try to recover");
+      //       hls.startLoad();
+      //       break;
+      //     case HLS.ErrorTypes.MEDIA_ERROR:
+      //       console.log("fatal media error encountered, try to recover");
+      //       hls.recoverMediaError();
+      //       break;
+      //     default:
+      //       // cannot recover
+      //       hls.destroy();
+      //       break;
+      //   }
+      // }
     });
   }
 
@@ -227,6 +300,17 @@
                   </div>
                 </div>
               {/if}
+            </div>
+          </div>
+          <div class="row info-session">
+            <div class="col">
+              <h6 class="text-body-tertiary">VIDEO SEGMENT INFO</h6>
+              <dl class="row">
+
+                <dt class="col-sm-5">Last Decryption Key Seen</dt>
+                <dd class="col-sm-7">{$lastDecryptionKeySeenSeconds ? `${$lastDecryptionKeySeenSeconds} seconds ago` : "N/A"}</dd>
+
+              </dl>
             </div>
           </div>
           <div class="row info-session">

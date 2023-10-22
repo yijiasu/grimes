@@ -1,7 +1,7 @@
 import type { Invoice } from "@grimes/common/model";
 import { AbstractNetClient } from "@grimes/common/net-client";
 import type { WebLNProvider } from "@webbtc/webln-types";
-import { setIntervalAsync } from "set-interval-async/dynamic";
+import { setIntervalAsync, type SetIntervalAsyncTimer } from "set-interval-async/dynamic";
 import _ from "lodash";
 
 class ViewerNetClient extends AbstractNetClient {
@@ -43,6 +43,7 @@ export class PaidStreamingViewer extends EventEmitter {
   private netClient: ViewerNetClient;
   private autoPayEnabled: boolean = false;
   private paidInvoiceIds: Array<string> = [];
+  private timer: SetIntervalAsyncTimer<any> = null;
 
   constructor(
     private streamerBaseUrl: string,
@@ -57,7 +58,10 @@ export class PaidStreamingViewer extends EventEmitter {
     const session = await this.netClient.startViewerSession(this.viewerName);
     console.log(session);
 
-    setIntervalAsync(this.runloop.bind(this), 1000);
+    if (!this.timer) {
+      this.timer = setIntervalAsync(this.runloop.bind(this), 1000);
+    }
+    
     return session.playlist;
   }
 
