@@ -5,6 +5,9 @@
   import { PaidStreamingViewer } from "$lib/paid-streaming-viewer";
   import { derived, readable, writable } from "svelte/store";
   import HLS from "hls.js";
+  import { encode } from "bech32-buffer";
+  import { Buffer } from 'buffer';
+  import NDKSvelte from "@nostr-dev-kit/ndk-svelte";
 
   interface DisplayInvoice {
     seqNum: number;
@@ -21,10 +24,13 @@
   let streamerUrl = "https://ste-streamer.yijiasu.me";
 
   let viewerName = `PlayerName-${Math.random().toString(16).substring(2, 6)}`;
+  let nostrNpub = "";
 
   let psv: PaidStreamingViewer;
   let videoPlayer: HTMLVideoElement;
   let hls: HLS;
+
+  let ndk: NDKSvelte;
 
   let isStreaming: boolean;
   let isPaying: boolean;
@@ -66,6 +72,16 @@
     };
   });
 
+
+  ndk = new NDKSvelte({
+      explicitRelayUrls: ["ws://localhost:7000"]
+  });
+
+
+  const events = ndk.storeSubscribe({
+    kinds: [28001 as number]
+  }, { closeOnEose: false });
+
   onMount(async () => {
     if (window) {
       streamerUrl = window.location.href.includes("localhost") ? "http://localhost:8083" : "https://ste-streamer.yijiasu.me";
@@ -78,6 +94,8 @@
       weblnEnabled = await webln.isEnabled();
       await handleConnectWallet();
     }
+    console.log(ndk);
+    await ndk.connect();
   });
 
   function startHlsRecovery() {
@@ -147,7 +165,8 @@
   }
 
   function setupPSV() {
-    const psv = new PaidStreamingViewer(streamerUrl, viewerName, window.webln!);
+    const npub = encode("npub", Buffer.from(nostrNpub, "hex"));
+    const psv = new PaidStreamingViewer(streamerUrl, { viewerName, npub }, window.webln!);
     psv.on("onUpdateInvoices", (e) => {
       console.log(e.detail);
       invoices.set(e.detail);
@@ -162,6 +181,17 @@
       weblnEnabled = true;
       walletBalance = balance.balance;
     }
+    console.log("xx");
+
+    // @ts-ignore
+    if (window.nostr) {
+      // @ts-ignore
+      await window.nostr.enable();
+      // @ts-ignore
+      nostrNpub = await window.nostr.getPublicKey();
+      console.log(nostrNpub)
+    }
+
   }
 
   async function handleStartStreaming() {
@@ -371,6 +401,9 @@
   </div>
 </div>
 
+<p>
+  {$events}
+</p>
 <div class="footer">
   <div class="copyright">
     <p>Made by Yijia Su</p>

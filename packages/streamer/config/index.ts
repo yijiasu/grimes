@@ -29,6 +29,10 @@ interface IConfigViewer {
   masterKey: string;
 }
 
+interface IConfigNostr {
+  privateKey: string;
+}
+
 export interface IServiceConfig {
   rootPath: string;
   domain: string;
@@ -36,6 +40,7 @@ export interface IServiceConfig {
   nginx: IConfigNginx;
   ln: IConfigLN;
   viewer: IConfigViewer;
+  nostr: IConfigNostr;
 }
 export class StreamerConfig implements IServiceConfig {
   
@@ -45,6 +50,7 @@ export class StreamerConfig implements IServiceConfig {
   public readonly nginx: IConfigNginx;
   public readonly ln: IConfigLN;
   public readonly viewer: IConfigViewer;
+  public readonly nostr: IConfigNostr
 
   constructor(config: IServiceConfig) {
     Object.assign(this, config);
@@ -89,6 +95,9 @@ export class StreamerConfig implements IServiceConfig {
 
         // This is the master key for deriving the segment keys
         masterKey: envWithDefault("VIEWER_MASTER_KEY", "ecd0d06eaf884d8226c33928e87efa33"),
+      },
+      nostr: {
+        privateKey: mustDefineEnv("NOSTR_PRIVATE_KEY")
       }
     });
   }

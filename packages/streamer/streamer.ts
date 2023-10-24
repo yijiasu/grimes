@@ -1,10 +1,11 @@
 import 'dotenv/config'
+import "websocket-polyfill";
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { ServiceManager } from "./services/service-manager";
 import { StreamerConfig } from "./config";
-import { HTTPService, ViewerSessionService } from "./services";
+import { HTTPService, NostrService, ViewerSessionService } from "./services";
 import { VideoStreamService } from "./services/stream";
 import { PaymentService } from './services/payment';
 
@@ -18,6 +19,7 @@ async function main(argv: Record<string, any>) {
   serviceManager.registerService(new VideoStreamService(serviceConfig));
   serviceManager.registerService(new PaymentService(serviceConfig));
   serviceManager.registerService(new ViewerSessionService(serviceConfig));
+  serviceManager.registerService(new NostrService(serviceConfig));
 
   await serviceManager.startAllServices();
 }

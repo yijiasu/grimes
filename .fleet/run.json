@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "type": "npm",
+            "name": "Frontend",
+            "command": "dev",
+            "commandArguments": ["--open"],
+            "workingDir": "packages/player-new/",
+        },
+        {
+            "type": "npm",
+            "name": "Streamer",
+            "command": "run",
+            "scripts": "dev",
+            "workingDir": "packages/streamer/",
+        },
+        
+    ]
+}

@@ -3,7 +3,11 @@ import { IServiceConfig, StreamerConfig } from "../config";
 import { BaseService, ServiceName } from "./base";
 import { setIntervalAsync } from "set-interval-async/dynamic";
 import { PaymentService } from "./payment";
+import { NostrService } from './nostr';
 
+export interface ViewerInfo {
+  npub: string;
+}
 class ViewerSession {
 
   public createdAt: Date;
@@ -14,11 +18,19 @@ class ViewerSession {
   public paidInvoices: Array<Invoice> = [];
   public unpaidInvoices: Array<Invoice> = [];
 
-  constructor(public sessionId: string, private config: IServiceConfig) {
+  public viewerInfo?: ViewerInfo;
+
+  constructor(public sessionId: string, private config: IServiceConfig, viewerNpub?: string) {
     this.createdAt = new Date();
     this.lastPingedAt = new Date();
     this.lastInvoicedAt = new Date();
+    if (viewerNpub) {
+      this.viewerInfo = {
+        npub: viewerNpub
+      }
+    }
   }
+
   public getPlaylistUrl() {
     return `${this.config.viewer.playlistBaseUrl}/viewer_playlist?viewerName=${this.sessionId}`;
   }
@@ -57,6 +69,7 @@ export class ViewerSessionService extends BaseService {
   // viewer name to session
   private sessions: Map<string, ViewerSession> = new Map();
   private ps: PaymentService;
+  private nostr: NostrService;
   
   constructor(config: StreamerConfig) {
     super(config, "ViewerSessionService");
@@ -67,15 +80,16 @@ export class ViewerSessionService extends BaseService {
   }
   protected async onServiceStart(): Promise<void> {
     this.ps = this.serviceManager.getService("PaymentService");
+    this.nostr = this.serviceManager.getService("NostrService");
     setIntervalAsync(this.runloop.bind(this), this.config.viewer.runloopCheckInterval);
   }
   protected async onServiceStop(): Promise<void> {}
 
-  public startSession(viewerName: string) {
+  public startSession(viewerName: string, viewerNpub?: string) {
     if (this.sessions.has(viewerName)) {
       return this.sessions.get(viewerName);
     }
-    const session = new ViewerSession(viewerName, this.config);
+    const session = new ViewerSession(viewerName, this.config, viewerNpub);
     this.sessions.set(viewerName, session);
     return session;
   }
@@ -147,6 +161,8 @@ export class ViewerSessionService extends BaseService {
         );
 
         session.appendInvoice(invoice);
+        this.nostr.dispatchInvoice(invoice, session.viewerInfo);
+        
 
       }
     } catch (error) {

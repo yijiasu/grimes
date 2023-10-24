@@ -5,8 +5,8 @@ import { setIntervalAsync, type SetIntervalAsyncTimer } from "set-interval-async
 import _ from "lodash";
 
 class ViewerNetClient extends AbstractNetClient {
-  public async startViewerSession(viewerName: string) {
-    return this.httpPostRequest("start_viewer_session", { viewerName });
+  public async startViewerSession(viewerName: string, npub?: string) {
+    return this.httpPostRequest("start_viewer_session", { viewerName, npub });
   }
 
   public async stopViewerSession(viewerName: string) {
@@ -44,18 +44,22 @@ export class PaidStreamingViewer extends EventEmitter {
   private autoPayEnabled: boolean = false;
   private paidInvoiceIds: Array<string> = [];
   private timer: SetIntervalAsyncTimer<any> = null;
+  private viewerName: string;
+  private viwerNpub?: string;
 
   constructor(
     private streamerBaseUrl: string,
-    private viewerName: string,
+    { viewerName, npub }: { viewerName: string; npub?: string },
     private webln: WebLNProvider,
   ) {
     super();
+    this.viewerName = viewerName;
+    this.viwerNpub = npub;
     this.netClient = new ViewerNetClient(streamerBaseUrl);
   }
 
   public async start() {
-    const session = await this.netClient.startViewerSession(this.viewerName);
+    const session = await this.netClient.startViewerSession(this.viewerName, this.viwerNpub);
     console.log(session);
 
     if (!this.timer) {
