@@ -435,6 +435,7 @@
 
   #live {
     width: 100%;
+    max-height: 500px;
   }
   .player-control {
     display: flex;
